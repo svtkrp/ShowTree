@@ -24,7 +24,7 @@
     const gData = getGraphData(tree);
 
 		// highlighted
-		const highlightNodes = new Set();
+    const highlightNodes = new Set();
     const highlightLinks = new Set();
 
     // new graph
@@ -34,19 +34,19 @@
         .graphData(gData)
         // interaction
         .enableNodeDrag(false)
-				.onNodeClick(n => { findDepthPath(n.id); updateHighlighted(); })
+        .onNodeClick(n => { findDepthPath(n.id); updateHighlighted(); })
         // container layout
         .backgroundColor('#110011')
 				// dag mode
-				.dagMode('td')
-				.dagLevelDistance(50)
+        .dagMode('td')
+        .dagLevelDistance(50)
         // links style
         .linkColor('white')
         .linkOpacity(0.3)
         .linkWidth(1)
-				.linkDirectionalParticles(link => (highlightLinks.has(link) ? 4 : 0))
+        .linkDirectionalParticles(link => (highlightLinks.has(link) ? 4 : 0))
         // nodes style
-				.nodeAutoColorBy('id')
+        .nodeAutoColorBy('id')
         .nodeThreeObject(node => {
           const obj = new THREE.Mesh(
             new THREE.SphereGeometry((highlightNodes.has(node) ? 12 : 6), 32),
@@ -60,28 +60,28 @@
         });
 
 
-		function findDepthPath(id) {
-			const {nodes, links} = Graph.graphData();
-			highlightNodes.clear();
+    function findDepthPath(id) {
+      const {nodes, links} = Graph.graphData();
+      highlightNodes.clear();
       highlightLinks.clear();
-			var key = id;
-			var node = nodes.find(n => (n.id == key));
-			highlightNodes.add(node);
-			var link;
-			while (key != rootkey) {
-				link = links.find(l => (l.target.id == key));
-				highlightLinks.add(link);
-				key = link.source.id;
-				node = nodes.find(n => (n.id == key));
-				highlightNodes.add(node);
-			}
-		}
+      var key = id;
+      var node = nodes.find(n => (n.id == key));
+      highlightNodes.add(node);
+      var link;
+      while (key != rootkey) {
+        link = links.find(l => (l.target.id == key));
+        highlightLinks.add(link);
+        key = link.source.id;
+        node = nodes.find(n => (n.id == key));
+        highlightNodes.add(node);
+      }
+    }
 
-		function updateHighlighted() {
-			Graph
+    function updateHighlighted() {
+      Graph
         .nodeThreeObject(Graph.nodeThreeObject())
         .linkDirectionalParticles(Graph.linkDirectionalParticles());
-		}
+    }
 
   </script>
 </body>
