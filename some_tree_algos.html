@@ -11,6 +11,17 @@
 
 <body>
   <div id="3d-graph"></div>
+  <div style="position: absolute; bottom: 10px; right: 40px;">
+    <button id="depthToggle" style="margin: 8px; height: 50px; width: 150px;">
+      Find Depth
+    </button>
+    <button id="cancelToggle" style="margin: 8px; height: 50px; width: 150px; display: none;">
+      Cancel
+    </button>
+  </div>
+  <div style="position: absolute; bottom: 100px; right: 40px;">
+    <p style="color:white;" id="text"></p>
+  </div>
 
   <script>
     // Some tree (array)
@@ -34,7 +45,7 @@
         .graphData(gData)
         // interaction
         .enableNodeDrag(false)
-        .onNodeClick(n => { findDepthPath(n.id); updateHighlighted(); })
+        .onNodeClick(null)
         // container layout
         .backgroundColor('#110011')
         // dag mode
@@ -75,6 +86,7 @@
         node = nodes.find(n => (n.id == key));
         highlightNodes.add(node);
       }
+      document.getElementById('text').innerHTML = "Depth is " + highlightLinks.size.toString();
     }
 
     function updateHighlighted() {
@@ -82,6 +94,23 @@
         .nodeThreeObject(Graph.nodeThreeObject())
         .linkDirectionalParticles(Graph.linkDirectionalParticles());
     }
+
+    // event for depth button
+    document.getElementById('depthToggle').addEventListener('click', event => {
+      Graph.onNodeClick(n => { findDepthPath(n.id); updateHighlighted(); });
+      document.getElementById('text').innerHTML = "Click on the node!";
+      document.getElementById('cancelToggle').style.display = "inline";
+    });
+
+		// event for cancel button
+    document.getElementById('cancelToggle').addEventListener('click', event => {
+      highlightNodes.clear();
+      highlightLinks.clear();
+      updateHighlighted();
+      document.getElementById('text').innerHTML = "";
+      Graph.onNodeClick(null);
+      document.getElementById('cancelToggle').style.display = "none";
+    });
 
   </script>
 </body>
