@@ -23,7 +23,7 @@
     // graph data
     const gData = getGraphData(tree);
 
-		// highlighted
+    // highlighted
     const highlightNodes = new Set();
     const highlightLinks = new Set();
 
@@ -37,7 +37,7 @@
         .onNodeClick(n => { findDepthPath(n.id); updateHighlighted(); })
         // container layout
         .backgroundColor('#110011')
-				// dag mode
+        // dag mode
         .dagMode('td')
         .dagLevelDistance(50)
         // links style
