@@ -12,7 +12,7 @@
 <body>
   <div id="3d-graph"></div>
   <div style="position: absolute; bottom: 10px; right: 40px;">
-    <button id="depthToggle" style="margin: 8px; height: 50px; width: 150px;">
+    <button id="depthToggle" style="margin: 8px; height: 50px; width: 150px; display: inline;">
       Find Depth
     </button>
     <button id="cancelToggle" style="margin: 8px; height: 50px; width: 150px; display: none;">
@@ -60,7 +60,7 @@
         .nodeAutoColorBy('id')
         .nodeThreeObject(node => {
           const obj = new THREE.Mesh(
-            new THREE.SphereGeometry((highlightNodes.has(node) ? 12 : 6), 32),
+            new THREE.SphereGeometry((highlightNodes.has(node) ? 16 : 8), 32),
             new THREE.MeshBasicMaterial({ depthWrite: false, transparent: true, opacity: (highlightNodes.has(node) ? 0.3 : 0.1) })
           );
           const sprite = new SpriteText(node.val.toString());
@@ -71,6 +71,7 @@
         });
 
 
+    // finding depth
     function findDepthPath(id) {
       const {nodes, links} = Graph.graphData();
       highlightNodes.clear();
@@ -89,6 +90,7 @@
       document.getElementById('text').innerHTML = "Depth is " + highlightLinks.size.toString();
     }
 
+    // updating highlighted nodes and links
     function updateHighlighted() {
       Graph
         .nodeThreeObject(Graph.nodeThreeObject())
@@ -97,18 +99,25 @@
 
     // event for depth button
     document.getElementById('depthToggle').addEventListener('click', event => {
+      // find depth when user click on any node
       Graph.onNodeClick(n => { findDepthPath(n.id); updateHighlighted(); });
+      // update text and buttons
       document.getElementById('text').innerHTML = "Click on the node!";
       document.getElementById('cancelToggle').style.display = "inline";
+      document.getElementById('depthToggle').style.display = "none";
     });
 
     // event for cancel button
     document.getElementById('cancelToggle').addEventListener('click', event => {
+      // nothing is highlighted
       highlightNodes.clear();
       highlightLinks.clear();
       updateHighlighted();
-      document.getElementById('text').innerHTML = "";
+      // nothing happens when user click on any node
       Graph.onNodeClick(null);
+      // update text and buttons
+      document.getElementById('text').innerHTML = "";
+      document.getElementById('depthToggle').style.display = "inline";
       document.getElementById('cancelToggle').style.display = "none";
     });
 
