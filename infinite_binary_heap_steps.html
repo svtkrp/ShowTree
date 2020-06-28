@@ -1,0 +1,90 @@
+<head>
+  <style> body { margin: 0; } </style>
+
+  <script src="https://unpkg.com/three"></script>
+  <script src="https://unpkg.com/three-spritetext"></script>
+  <script src="https://unpkg.com/3d-force-graph"></script>
+</head>
+
+<body>
+  <div id="3d-graph"></div>
+
+  <div style="position: absolute; bottom: 10px; right: 40px;">
+    <button id="nextToggle" style="margin: 8px; height: 50px; width: 150px;">
+      Next step
+    </button>
+  </div>
+
+  <script>
+    // consts for calc of coordinates
+    const y0 = 70;
+    const kx = 30;
+    const ky = 50;
+
+    // graph data
+    const gData = {
+      nodes: [{ id: 1, val: Math.round((0.4 + Math.random()) * 5), cx: 0, cy: y0, cz: 0, fx: 0, fy: y0, fz: 0}],
+      links: []
+    };
+
+    // new graph
+    const Graph = ForceGraph3D()
+      (document.getElementById('3d-graph'))
+        // adding data
+        .graphData(gData)
+        // interaction
+        .enableNodeDrag(false)
+        // container layout
+        .backgroundColor('#110011')
+        // links style
+        .linkColor('white')
+        .linkOpacity(0.3)
+        .linkWidth(1)
+        .linkDirectionalParticleWidth(2)
+        // nodes style
+        .nodeAutoColorBy('id')
+        .nodeThreeObject(node => {
+          const obj = new THREE.Mesh(
+            new THREE.SphereGeometry(6, 32),
+            new THREE.MeshBasicMaterial({ depthWrite: false, transparent: true, opacity: 0.1 })
+          );
+          const sprite = new SpriteText(node.val.toString());
+          sprite.color = node.color;
+          sprite.textHeight = 8;
+          obj.add(sprite);
+          return obj;
+        });
+
+    // next step of algo
+    function nextStep() {
+      const { nodes, links } = Graph.graphData();
+      const nodes2 = [...nodes].map(node => ({id: node.id, val: node.val, cx: node.cx, cy: node.cy, cz: node.cz, fx: node.cx, fy: node.cy, fz: node.cz}));
+      // new node's id
+      const i = nodes2.length + 1;
+      // parent node's value
+      const jv = nodes2[Math.floor(i/2) - 1].val;
+
+      // finding coordinates for new node
+      const level = Math.floor(Math.log(i) / Math.log(2));
+      const newcy = y0-level*ky;
+      const ave = 3 * Math.pow(2, level - 1) - 0.5;
+      const newcx = (i - ave)*kx;
+      
+      // new node's link from parent node
+      const newlink = { source: Math.floor(i/2), target: i};
+      // adding new data
+      Graph.graphData({
+        nodes: [...nodes2, { id: i, val: Math.round((1 + Math.random()/2) * jv), cx: newcx, cy: newcy, cz: 0, fx: newcx, fy: newcy, fz: 0}],
+        links: [...links, newlink]
+      })
+        // new highlighted link
+        .linkDirectionalParticles(link => (link == newlink) ? 4 : 0);
+    }
+
+    // event for next step button
+    document.getElementById('nextToggle').addEventListener('click', event => {
+      nextStep(); 
+    });
+
+  </script>
+</body>

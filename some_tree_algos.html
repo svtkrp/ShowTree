@@ -1,0 +1,87 @@
+<head>
+  <style> body { margin: 0; } </style>
+
+  <script src="https://unpkg.com/three"></script>
+  <script src="https://unpkg.com/three-spritetext"></script>
+  <script src="https://unpkg.com/3d-force-graph"></script>
+
+  <script src="find_root_key.js"></script>
+  <script src="map_of_children_to_graph_data.js"></script>
+</head>
+
+<body>
+  <div id="3d-graph"></div>
+
+  <script>
+    // Some tree (array)
+    const treeArr = [[18, [3, 10, 99]], [3, [1, 6]], [10, [14, 'M']], [6, [4, 7, 'a']], [14, [13]], [1, []], [4, []], [7, []], [13, []], [99, [0]], [0, ['xx']], ['a', []], ['xx', []], ['M', []]];
+    // Some tree (map)
+    const tree = new Map(treeArr);
+    // root key
+    const rootkey = findRootKey(tree);
+    
+    // graph data
+    const gData = getGraphData(tree);
+
+		// highlighted
+		const highlightNodes = new Set();
+    const highlightLinks = new Set();
+
+    // new graph
+    const Graph = ForceGraph3D()
+      (document.getElementById('3d-graph'))
+        // adding data
+        .graphData(gData)
+        // interaction
+        .enableNodeDrag(false)
+				.onNodeClick(n => { findDepthPath(n.id); updateHighlighted(); })
+        // container layout
+        .backgroundColor('#110011')
+				// dag mode
+				.dagMode('td')
+				.dagLevelDistance(50)
+        // links style
+        .linkColor('white')
+        .linkOpacity(0.3)
+        .linkWidth(1)
+				.linkDirectionalParticles(link => (highlightLinks.has(link) ? 4 : 0))
+        // nodes style
+				.nodeAutoColorBy('id')
+        .nodeThreeObject(node => {
+          const obj = new THREE.Mesh(
+            new THREE.SphereGeometry((highlightNodes.has(node) ? 12 : 6), 32),
+            new THREE.MeshBasicMaterial({ depthWrite: false, transparent: true, opacity: (highlightNodes.has(node) ? 0.3 : 0.1) })
+          );
+          const sprite = new SpriteText(node.val.toString());
+          sprite.color = node.color;
+          sprite.textHeight = 8;
+          obj.add(sprite);
+          return obj;
+        });
+
+
+		function findDepthPath(id) {
+			const {nodes, links} = Graph.graphData();
+			highlightNodes.clear();
+      highlightLinks.clear();
+			var key = id;
+			var node = nodes.find(n => (n.id == key));
+			highlightNodes.add(node);
+			var link;
+			while (key != rootkey) {
+				link = links.find(l => (l.target.id == key));
+				highlightLinks.add(link);
+				key = link.source.id;
+				node = nodes.find(n => (n.id == key));
+				highlightNodes.add(node);
+			}
+		}
+
+		function updateHighlighted() {
+			Graph
+        .nodeThreeObject(Graph.nodeThreeObject())
+        .linkDirectionalParticles(Graph.linkDirectionalParticles());
+		}
+
+  </script>
+</body>

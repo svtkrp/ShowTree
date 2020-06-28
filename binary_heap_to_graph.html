@@ -1,0 +1,71 @@
+<head>
+  <style> body { margin: 0; } </style>
+
+  <script src="https://unpkg.com/three"></script>
+  <script src="https://unpkg.com/three-spritetext"></script>
+  <script src="https://unpkg.com/3d-force-graph"></script>
+</head>
+
+<body>
+  <div id="3d-graph"></div>
+
+  <script>
+    // min binary heap
+    const tree = [2, 4, 9, 10, 5, 20, 13, 11, 15, 7];
+
+    // preparing graph data
+    var nodes = new Array(tree.length);
+    var links = new Array(tree.length - 1);
+
+    // consts for calc of coordinates
+    const y0 = 70;
+    const kx = 30;
+    const ky = 50;
+
+    // root node
+    nodes[0] = {id: 1, val: tree[0], cx: 0, cy: y0, cz: 0, fx: 0, fy: y0, fz: 0};
+    // other nodes and links
+    for (var i = 1; i < tree.length; i++)
+    {
+      // finding coordinates for node
+      const level = Math.floor(Math.log(i+1) / Math.log(2));
+      const newcy = y0-level*ky;
+      const ave = 3 * Math.pow(2, level - 1) - 0.5;
+      const newcx = (i+1 - ave)*kx;
+
+      nodes[i] = {id: i+1, val: tree[i], cx: newcx, cy: newcy, cz: 0, fx: newcx, fy: newcy, fz: 0};
+      links[i-1] = {source: Math.floor((i+1)/2), target: i+1};
+    }
+
+    // graph data
+    const gData = {nodes, links};
+
+    // new graph
+    const Graph = ForceGraph3D()
+      (document.getElementById('3d-graph'))
+        // adding data
+        .graphData(gData)
+        // interaction
+        .enableNodeDrag(false)
+        // container layout
+        .backgroundColor('#110011')
+        // links style
+        .linkColor('white')
+        .linkOpacity(0.3)
+        .linkWidth(1)
+        // nodes style
+        .nodeAutoColorBy('id')
+        .nodeThreeObject(node => {
+          const obj = new THREE.Mesh(
+            new THREE.SphereGeometry(6, 32),
+            new THREE.MeshBasicMaterial({ depthWrite: false, transparent: true, opacity: 0.1 })
+          );
+          const sprite = new SpriteText(node.val.toString());
+          sprite.color = node.color;
+          sprite.textHeight = 8;
+          obj.add(sprite);
+          return obj;
+        });
+
+  </script>
+</body>

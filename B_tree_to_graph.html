@@ -1,0 +1,97 @@
+<head>
+  <style> body { margin: 0; } </style>
+
+  <script src="https://unpkg.com/three"></script>
+  <script src="https://unpkg.com/three-spritetext"></script>
+  <script src="https://unpkg.com/3d-force-graph"></script>
+</head>
+
+<body>
+  <div id="3d-graph"></div>
+
+  <script>
+    // B-tree (array)
+    const tree = [[1, 7, 2, 16, 3, null, null, null, null], [null, 1, null, 2, null, 5, null, 6, null], [null, 9, null, 12, null, null, null, null, null], [null, 18, null, 21, null, null, null, null, null]];
+    // root index
+    const rootIndex = 0;
+    // m - Knuth order
+    const m = 5;
+
+    // preparing graph data
+    var nodes = new Array(tree.length);
+    var links = new Array(tree.length - 1);
+
+    // consts for calc of coordinates
+    const y0 = 70;
+    const kx = m*20;
+    const ky = 50;
+
+    // division by levels 
+    var byLevels = [];
+    divideByLevels(null, rootIndex, 0);
+
+    // nodes and links
+    nodes[0] = {id: rootIndex, val: elemToStr(tree[rootIndex]), cx: 0, cy: y0, cz: 0, fx: 0, fy: y0, fz: 0};
+    var i = 1;
+    for (var level = 1; level < byLevels.length; level++) {
+      const newcy = y0-level*ky;
+      const ave = (byLevels[level].length-1)/2;
+      for (var j = 0; j < byLevels[level].length; j++) {
+        const newcx = (j - ave)*kx;
+        nodes[i] = {id: byLevels[level][j][1], val: elemToStr(tree[byLevels[level][j][1]]), cx: newcx, cy: newcy, cz: 0, fx: newcx, fy: newcy, fz: 0};
+        links[i-1] = {source: byLevels[level][j][0], target: byLevels[level][j][1]};
+        i++;
+      }
+    }
+    
+    function divideByLevels(parent, index, level) {
+      if (index == null) return;
+      (byLevels.length - 1 < level) ? byLevels.push([[parent, index]]) : byLevels[level].push([parent, index]);
+      for (var k = 0; k < tree[index].length; k = k + 2) {
+        divideByLevels(index, tree[index][k], level + 1);
+      }
+    }
+
+    // node to string like |*|3|*|_|_|
+    function elemToStr(elem) {
+      var str = '|';
+      for (var ii = 0; ii < elem.length; ii++) {
+        if (elem[ii] == null) { str = str + ' |'; }
+          else if (ii % 2 == 0) { str = str + '*|'; }
+            else { str = str + elem[ii].toString() + '|'; }
+      }
+      return str;
+    }
+   
+    // graph data
+    const gData = {nodes, links};
+
+    // new graph
+    const Graph = ForceGraph3D()
+      (document.getElementById('3d-graph'))
+        // adding data
+        .graphData(gData)
+        // interaction
+        .enableNodeDrag(false)
+        // container layout
+        .backgroundColor('#110011')
+        // links style
+        .linkColor('white')
+        .linkOpacity(0.3)
+        .linkWidth(1)
+        // nodes style
+        .nodeAutoColorBy('id')
+        .nodeThreeObject(node => {
+          const obj = new THREE.Mesh(
+            new THREE.SphereGeometry(6, 32),
+            new THREE.MeshBasicMaterial({ depthWrite: false, transparent: true, opacity: 0 })
+          );
+          const sprite = new SpriteText(node.val);
+          sprite.color = node.color;
+          sprite.textHeight = 8;
+          obj.add(sprite);
+          return obj;
+        });
+
+  </script>
+</body>

@@ -1,0 +1,88 @@
+<head>
+  <style> body { margin: 0; } </style>
+
+  <script src="https://unpkg.com/three"></script>
+  <script src="https://unpkg.com/three-spritetext"></script>
+  <script src="https://unpkg.com/3d-force-graph"></script>
+</head>
+
+<body>
+  <div id="3d-graph"></div>
+
+  <script>
+    // BST (array)
+    const treeArr = [[8, {left: 3, right: 10}], [3, {left: 1, right: 6}], [10, {left: null, right: 14}], [6, {left: 4, right: 7}], [14, {left: 13, right: null}], [1, {left: null, right: null}], [4, {left: null, right: null}], [7, {left: null, right: null}], [13, {left: null, right: null}]];
+    // BST (map)
+    const tree = new Map(treeArr);
+    // root key
+    const rootkey = 8;
+
+    // preparing graph data
+    var nodes = new Array(tree.size);
+    var links = new Array(tree.size - 1);
+
+    // consts for calc of coordinates
+    const y0 = 70;
+    const kx = 30;
+    const ky = 50;
+
+    // division by levels 
+    var byLevels = [];
+    divideByLevels(null, rootkey, 0, 0);
+
+    // nodes and links
+    nodes[0] = {id: rootkey, val: rootkey, color: 0, cx: 0, cy: y0, cz: 0, fx: 0, fy: y0, fz: 0};
+    var i = 1;
+    for (var level = 1; level < byLevels.length; level++) {
+      const newcy = y0-level*ky;
+      const ave = (byLevels[level].length-1)/2;
+      for (var j = 0; j < byLevels[level].length; j++) {
+        const newcx = (j - ave)*kx;
+        nodes[i] = {id: byLevels[level][j][1], val: byLevels[level][j][1], color: byLevels[level][j][2], cx: newcx, cy: newcy, cz: 0, fx: newcx, fy: newcy, fz: 0};
+        links[i-1] = {source: byLevels[level][j][0], target: byLevels[level][j][1], color: byLevels[level][j][2]};
+        i++;
+      }
+    }
+    
+    // color = 0, if child is left, 1, if right
+    function divideByLevels(parent, key, level, color) {
+      if (key == null) return;
+      (byLevels.length - 1 < level) ? byLevels.push([[parent, key, color]]) : byLevels[level].push([parent, key, color]);
+      divideByLevels(key, tree.get(key).left, level + 1, 0);
+      divideByLevels(key, tree.get(key).right, level + 1, 1);
+    }
+   
+    // graph data
+    const gData = {nodes, links};
+
+    // new graph
+    const Graph = ForceGraph3D()
+      (document.getElementById('3d-graph'))
+        // adding data
+        .graphData(gData)
+        // interaction
+        .enableNodeDrag(false)
+        // container layout
+        .backgroundColor('#110011')
+        // links style
+        .linkColor(link => getColor(link.color))
+        .linkOpacity(0.5)
+        .linkWidth(1)
+        // nodes style
+        .nodeThreeObject(node => {
+          const obj = new THREE.Mesh(
+            new THREE.SphereGeometry(6, 32),
+            new THREE.MeshBasicMaterial({ depthWrite: false, transparent: true, opacity: 0.1 })
+          );
+          const sprite = new SpriteText(node.val.toString());
+          sprite.color = getColor(node.color);
+          sprite.textHeight = 8;
+          obj.add(sprite);
+          return obj;
+        });
+
+    // green left chidren, red right children
+    function getColor(color) { return (color ? 'red' : 'green'); };
+
+  </script>
+</body>
