@@ -1,8 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import Card from '@material-ui/core/Card';
-import CardContent from '@material-ui/core/CardContent';
-import CardActions from '@material-ui/core/CardActions';
+import Paper from '@material-ui/core/Paper';
+import Grid from '@material-ui/core/Grid';
 import Typography from '@material-ui/core/Typography';
 
 import MyAlert from '../common/MyAlert.js';
@@ -242,27 +241,29 @@ class AnyTreeButtons extends React.Component {
         <Typography variant="button" color='secondary' gutterBottom style={{position: 'relative', left: '0%', bottom: '10px'}}>
           {this.state.text}
         </Typography>
-        <Card style={{ marginBottom: 12 }} elevation={3}>
-          <CardActions>
-            <MyButton name="Построить дерево по умолчанию" color="secondary" onClick={() => this.setDefaultTree()} style={!this.state.newDisabled ? {display: 'block'} : {display: 'none'}} />
-            <MyButton name="Глубина узла" onClick={() => this.depth()} disabled={this.state.disabled == 'depth'} />
-            <MyButton name="Высота узла" onClick={() => this.height()} disabled={this.state.disabled == 'height'} />
-            <MyButton name="Убрать выделение" color="secondary" onClick={() => this.clear()} style={!this.state.clearDisabled ? {display: 'block'} : {display: 'none'}} />
-            <MyButton name="Сбросить режим" color="secondary" onClick={() => this.cancel()} 
-              style={this.state.disabled == 'depth' || this.state.disabled == 'height' ? {display: 'block'} : {display: 'none'}} />
-            <MyButton name={this.state.jsonOpen ? "Закрыть JSON" : "Открыть JSON"} onClick={() => this.setState({jsonOpen: !this.state.jsonOpen})} />
-          </CardActions>
-        </Card>
+        <Paper style={{ marginBottom: '1%', padding: 15, maxWidth: 800 }} elevation={3}>
+          <Grid container direction="row" justify="flex-start" alignItems="center" spacing={1}>
+            <Grid item style={!this.state.newDisabled ? {display: 'block'} : {display: 'none'}}><MyButton name="Построить дерево по умолчанию" color="secondary" 
+              onClick={() => this.setDefaultTree()} /></Grid>
+            <Grid item><MyButton name="Глубина узла" onClick={() => this.depth()} disabled={this.state.disabled == 'depth'} /></Grid>
+            <Grid item><MyButton name="Высота узла" onClick={() => this.height()} disabled={this.state.disabled == 'height'} /></Grid>
+            <Grid item style={!this.state.clearDisabled ? {display: 'block'} : {display: 'none'}}><MyButton name="Убрать выделение" color="secondary" onClick={() => this.clear()} /></Grid>
+            <Grid item style={this.state.disabled == 'depth' || this.state.disabled == 'height' ? {display: 'block'} : {display: 'none'}}><MyButton name="Сбросить режим" 
+              color="secondary" onClick={() => this.cancel()} /></Grid>
+            <Grid item><MyButton name={this.state.jsonOpen ? "Закрыть JSON" : "Открыть JSON"} onClick={() => this.setState({jsonOpen: !this.state.jsonOpen})} /></Grid>
+          </Grid>
+        </Paper>
+
         <MyAlert open={this.state.openSuccess} onClose={() => this.handleSuccessClose()} severity="success" text={this.state.textSuccess} />
         <MyAlert open={this.state.openFail} onClose={() => this.handleFailClose()} severity="error" text={this.state.textFail} />
-        <Card elevation={3} style={this.state.jsonOpen ? {display: 'block'} : {display: 'none'}}>
-          <CardContent>
-            <MyTextField value={this.state.jsonValue} onChange={(e) => this.handleChangeJson(e)} />
-          </CardContent>
-          <CardActions> 
-            <MyButton name="Визуализировать" onClick={() => this.setJsonTree()} disabled={this.state.setJsonDisabled} />
-          </CardActions>
-        </Card>
+
+        <Paper elevation={3} style={this.state.jsonOpen ? {display: 'block', padding: 15, marginBottom: '1%'} : {display: 'none', padding: 15, marginBottom: '1%'}}>
+          <Grid container direction="column" justify="center" alignItems="flex-start" spacing={1}>
+            <Grid item style={{width: '100%'}}><MyTextField value={this.state.jsonValue} onChange={(e) => this.handleChangeJson(e)} /></Grid>
+            <Grid item><MyButton name="Визуализировать" onClick={() => this.setJsonTree()} disabled={this.state.setJsonDisabled} /></Grid>
+          </Grid>
+        </Paper>
+
         <Typography variant="caption" color='secondary' gutterBottom style={{position: 'relative', left: '0%', top: '5px', bottom: '5px'}}>
           левая кнопка мыши - вращение, правая - передвижение камеры, колесико - приближение/отдаление камеры
         </Typography>
