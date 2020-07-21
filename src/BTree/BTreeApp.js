@@ -2,12 +2,17 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import Paper from '@material-ui/core/Paper';
 import Grid from '@material-ui/core/Grid';
-import Typography from '@material-ui/core/Typography';
+import { ThemeProvider } from '@material-ui/styles';
 
 import MyAlert from '../common/MyAlert.js';
 import MyButton from '../common/MyButton.js';
 import MyNumberField from '../common/MyNumberField.js';
-import MyTextField from '../common/MyTextField.js';
+import MyControlText from '../common/MyControlText.js';
+import MyJsonPaper from '../common/MyJsonPaper.js';
+import MyIconButtonUp from '../common/MyIconButtonUp.js';
+import MyIconButtonDown from '../common/MyIconButtonDown.js';
+import getTheme from '../common/get_theme.js';
+import '../common/main.css';
 
 import ForceGraph3D from '3d-force-graph';
 import * as THREE from 'three';
@@ -51,6 +56,7 @@ function showGraph() {
         .enableNodeDrag(false)
         // container layout
         .backgroundColor('#050011')
+        .showNavInfo(false)
         // links style
         .linkColor('white')
         .linkOpacity(0.3)
@@ -164,9 +170,13 @@ class BTreeButtons extends React.Component {
     super(props);
     this.state = {fieldDisabled: false, randomDisabled: false, 
       insertDisabled: false, setJsonDisabled: false, searchDisabled: (gData.nodes.length < 1), deleteDisabled: (gData.nodes.length < 1), clearDisabled: true, 
-      curValue: currentValue, jsonValue: jsonStr, jsonOpen: false, openSuccess: false, openFail: false,
+      curValue: currentValue, jsonValue: jsonStr, jsonOpen: false, paperOpen: true, controlTextOpen: true, openSuccess: false, openFail: false,
       textSuccess: "", textFail: ""};
     thisButtons = this;
+
+    setTimeout(() => {
+      this.setState({controlTextOpen: false});
+    }, 5000);
   }
 
   // on change number field
@@ -532,8 +542,11 @@ console.log('searchLoop');
   // rendering text field and buttons area and 2 alerts
   render() {
     return (
+      <ThemeProvider theme={getTheme()}>
       <div>
-        <Paper style={{ marginBottom: '1%', padding: 15, maxWidth: 800 }} elevation={3}>
+        <MyIconButtonUp onClick={() => this.setState({paperOpen: true})} visible={!this.state.paperOpen} />
+
+        <Paper className={this.state.paperOpen ? "buttonsPaper" : "hided"}>
         <Grid container direction="column" justify="center" alignItems="center" spacing={1}>
           <Grid container item direction="row" justify="flex-start" alignItems="center" spacing={1}>
             <Grid item><MyNumberField value={this.state.curValue} onChange={(e) => this.handleChange(e)} disabled={this.state.fieldDisabled} /></Grid>
@@ -546,6 +559,7 @@ console.log('searchLoop');
             <Grid item><MyButton name="Удалить узел" onClick={() => this.delete()} disabled={this.state.deleteDisabled} /></Grid>
             <Grid item><MyButton name="Убрать выделение" onClick={() => this.clear()} disabled={this.state.clearDisabled} /></Grid>
             <Grid item><MyButton name={this.state.jsonOpen ? "Закрыть JSON" : "Открыть JSON"} onClick={() => this.setState({jsonOpen: !this.state.jsonOpen})} /></Grid>
+            <Grid item><MyIconButtonDown onClick={() => this.setState({paperOpen: false, jsonOpen: false, controlTextOpen: false})} /></Grid>
           </Grid>
         </Grid>
         </Paper>
@@ -553,17 +567,11 @@ console.log('searchLoop');
         <MyAlert open={this.state.openSuccess} onClose={() => this.handleSuccessClose()} severity="success" text={this.state.textSuccess} />
         <MyAlert open={this.state.openFail} onClose={() => this.handleFailClose()} severity="error" text={this.state.textFail} />
 
-        <Paper elevation={3} style={this.state.jsonOpen ? {display: 'block', padding: 15, marginBottom: '1%'} : {display: 'none', padding: 15, marginBottom: '1%'}}>
-          <Grid container direction="column" justify="center" alignItems="flex-start" spacing={1}>
-            <Grid item style={{width: '100%'}}><MyTextField value={this.state.jsonValue} onChange={(e) => this.handleChangeJson(e)} /></Grid>
-            <Grid item><MyButton name="Визуализировать" onClick={() => this.setJsonTree()} disabled={this.state.setJsonDisabled} /></Grid>
-          </Grid>
-        </Paper>
+        <MyJsonPaper jsonOpen={this.state.jsonOpen} jsonValue={this.state.jsonValue} onChange={(e) => this.handleChangeJson(e)} onClick={() => this.setJsonTree()} setJsonDisabled={this.state.setJsonDisabled} />
 
-        <Typography variant="caption" color='secondary' gutterBottom style={{position: 'relative', left: '0%', top: '5px', bottom: '5px'}}>
-          левая кнопка мыши - вращение, правая - передвижение камеры, колесико - приближение/отдаление камеры
-        </Typography>
+        <MyControlText controlTextOpen={this.state.controlTextOpen} />
       </div>
+      </ThemeProvider>
     );
   }
 }
