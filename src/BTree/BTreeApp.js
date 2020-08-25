@@ -544,7 +544,10 @@ console.log('searchLoop');
     return (
       <ThemeProvider theme={getTheme()}>
       <div>
-        <MyIconButtonUp onClick={() => this.setState({paperOpen: true})} visible={!this.state.paperOpen} />
+        <Grid container direction="row" justify="flex-end" alignItems="center" style={{maxWidth: '850px', paddingLeft: '5px', paddingRight: '30px', paddingBottom: '10px'}}>
+          <Grid item xs></Grid>
+          <Grid item xs={1}><MyIconButtonUp onClick={() => this.setState({paperOpen: true})} visible={!this.state.paperOpen} /></Grid>
+        </Grid>
 
         <Paper className={this.state.paperOpen ? "buttonsPaper" : "hided"}>
         <Grid container direction="column" justify="center" alignItems="center" spacing={1}>

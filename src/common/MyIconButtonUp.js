@@ -4,7 +4,7 @@ import ArrowUpwardIcon from '@material-ui/icons/ArrowUpward';
 
 export default function MyIconButtonUp(props) {
     return (
-        <IconButton color="secondary" aria-label="show" onClick={props.onClick} style={props.visible ? {display: 'inline', bottom: '10px'} : {display: 'none'}}>
+        <IconButton color="secondary" aria-label="show" onClick={props.onClick} style={props.visible ? {display: 'block'} : {display: 'none'}}>
           <ArrowUpwardIcon />
         </IconButton>
     );

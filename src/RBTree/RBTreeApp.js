@@ -7,6 +7,7 @@ import { ThemeProvider } from '@material-ui/styles';
 import MyAlert from '../common/MyAlert.js';
 import MyButton from '../common/MyButton.js';
 import MyNumberField from '../common/MyNumberField.js';
+import MyInfoText from '../common/MyInfoText.js';
 import MyControlText from '../common/MyControlText.js';
 import MyJsonPaper from '../common/MyJsonPaper.js';
 import MyIconButtonUp from '../common/MyIconButtonUp.js';
@@ -88,6 +89,12 @@ function updateHighlightNodes(treeNodes, nodes) {
   treeNodes.forEach(treeNode => highlightNodes.add(nodes.find(n => (n.id == treeNode.Value))));
   Graph.nodeThreeObject(Graph.nodeThreeObject());
 }
+function updateHighlightNodes2(treeNodes) {
+  highlightNodes.clear();
+  const {nodes, links} = gData;
+  treeNodes.forEach(treeNode => highlightNodes.add(nodes.find(n => (n.id == treeNode.Value))));
+  Graph.nodeThreeObject(Graph.nodeThreeObject());
+}
 function clearHighlightNodes() {
   highlightNodes.clear();
   Graph.nodeThreeObject(Graph.nodeThreeObject());
@@ -107,12 +114,16 @@ class RBTreeButtons extends React.Component {
     this.state = {fieldDisabled: false, randomDisabled: false, 
       insertDisabled: false, setJsonDisabled: false, searchDisabled: (gData.nodes.length < 1), deleteDisabled: (gData.nodes.length < 1), clearDisabled: true, 
       curValue: currentValue, jsonValue: jsonStr, jsonOpen: false, paperOpen: true, controlTextOpen: true, openSuccess: false, openFail: false,
-      textSuccess: "", textFail: ""};
+      textSuccess: "", textFail: "", text: ""};
     thisRBTreeButtons = this;
 
     setTimeout(() => {
       this.setState({controlTextOpen: false});
     }, 5000);
+  }
+
+  changeText(str) {
+    this.setState({text: str});
   }
 
   // on change number field
@@ -143,56 +154,183 @@ class RBTreeButtons extends React.Component {
     this.setState({openFail: false});
   }
 
-  // insert new node (2 steps)
-  insert() { 
+  // insert new node
+  insert() {
+    this.changeText("");
     this.setState({fieldDisabled: true, randomDisabled: true, insertDisabled: true, setJsonDisabled: true, searchDisabled: true, deleteDisabled: true, clearDisabled: true});
     if (!currentValue || !Number.isFinite(currentValue)) this.setRandomValue();
+    const found = tree.Search(currentValue);
     const inserted = tree.add_1(currentValue);
-    gData = getGraphData(tree);
-    Graph.graphData(gData);
-    updateHighlightNode(inserted);
-
-    setTimeout(() => {
-      tree.add_2(inserted);
+    if (found) {
+      this.changeText("Ищем узел " + currentValue + ". Такой узел уже есть. В двоичном дереве поиска и красно-черном дереве все узлы различны, поэтому новый не вставляем");
+      updateHighlightNode(inserted);
+      this.setState({fieldDisabled: false, randomDisabled: false, insertDisabled: false, setJsonDisabled: false, searchDisabled: false, deleteDisabled: false, clearDisabled: false});
+      this.setState({textFail: "Такой узел уже есть!", openFail: true});
+    } else {
+      this.changeText("Ищем узел " + currentValue + ". Такого нет, вставляем красный " + currentValue + " на свободное место");
       gData = getGraphData(tree);
       Graph.graphData(gData);
       updateHighlightNode(inserted);
-      updateJsonStr();
-      this.setState({jsonValue: jsonStr});
-      this.setState({fieldDisabled: false, randomDisabled: false, insertDisabled: false, setJsonDisabled: false, searchDisabled: false, deleteDisabled: false, clearDisabled: false});
-    }, 1000);
+      setTimeout(() => {
+        this.insertLoop(inserted, tree.add_3(inserted, 1));
+      }, 5000);
+    }
+  }
+
+  // recursive function for insert
+  insertLoop(node, doneCase) {
+    const P = node.Parent;
+    const U = node.Uncle;
+    const sib = tree.sibling(node);
+    const GP = node.GrandParent;
+    const LC = node.LeftChild;
+    const RC = node.RightChild;
+    switch(doneCase) {
+      case 1: // root
+        this.changeText("1) " + node.Value + " - корень, перекрашиваем его в черный");
+        updateHighlightNode(node);
+        setTimeout(() => {
+          gData = getGraphData(tree);
+          Graph.graphData(gData);
+          updateHighlightNode(node);
+          updateJsonStr();
+          this.setState({jsonValue: jsonStr});
+          this.setState({fieldDisabled: false, randomDisabled: false, insertDisabled: false, setJsonDisabled: false, searchDisabled: false, deleteDisabled: false, clearDisabled: false});
+          this.setState({textSuccess: "Вставка нового узла завершена!", openSuccess: true});
+        }, 5000);
+        break;
+      case 2: // parent - black
+        this.changeText("2) Родитель " + node.Value + " (" + P.Value + ") - черный, ничего не меняем");
+        updateHighlightNodes2([node, P]);
+        this.setState({fieldDisabled: false, randomDisabled: false, insertDisabled: false, setJsonDisabled: false, searchDisabled: false, deleteDisabled: false, clearDisabled: false});
+        this.setState({textSuccess: "Вставка нового узла завершена!", openSuccess: true});
+        break;
+      case 3: // parent and uncle - red
+        this.changeText("Родитель (" + P.Value + ") и дядя (" + U.Value + ") узла " + node.Value + " - красные, перекрашиваем их в черный, а деда (" + GP.Value + ") в красный, затем выполняем 1) для деда");
+        updateHighlightNodes2([node, P, U, GP]);
+        setTimeout(() => {
+          gData = getGraphData(tree);
+          Graph.graphData(gData);
+          updateHighlightNodes2([node, P, U, GP]);
+          updateJsonStr();
+          this.setState({jsonValue: jsonStr});
+          setTimeout(() => {
+            thisRBTreeButtons.insertLoop(GP, tree.add_3(GP, 1));
+          }, 5000);
+        }, 5000);
+        break;
+      case 41: // parent - red, uncle - not red, right-left node
+        sib ? this.changeText("4.1) Родитель узла " + node.Value + " (" + LC.Value + ") - красный, но дядя (" + sib.Value + ") - черный, " + node.Value + " - правый сын левого сына, выполняем малое левое вращение, затем 5) для " + LC.Value) : this.changeText("4.1) Родитель узла " + node.Value + " (" + LC.Value + ") - красный, но дяди нет, " + node.Value + " - правый сын левого сына, выполняем малое левое вращение, затем 5) для " + LC.Value);
+        updateHighlightNodes2([node, LC]);
+        setTimeout(() => {
+          gData = getGraphData(tree);
+          Graph.graphData(gData);
+          updateHighlightNodes2([node, LC]);
+          updateJsonStr();
+          this.setState({jsonValue: jsonStr});
+          setTimeout(() => {
+            thisRBTreeButtons.insertLoop(LC, tree.add_3(LC, 5));
+          }, 5000);
+        }, 5000);
+        break;
+      case 42: // parent - red, uncle - not red, left-right node
+        sib ? this.changeText("4.2) Родитель узла " + node.Value + " (" + RC.Value + ") - красный, но дядя (" + sib.Value + ") - черный, " + node.Value + " - левый сын правого сына, выполняем малое правое вращение, затем 5) для " + RC.Value) : this.changeText("4.2) Родитель узла " + node.Value + " (" + RC.Value + ") - красный, но дяди нет, " + node.Value + " - левый сын правого сына, выполняем малое правое вращение, затем 5) для " + RC.Value);
+        updateHighlightNodes2([node, RC]);
+        setTimeout(() => {
+          gData = getGraphData(tree);
+          Graph.graphData(gData);
+          updateHighlightNodes2([node, RC]);
+          updateJsonStr();
+          this.setState({jsonValue: jsonStr});
+          setTimeout(() => {
+            thisRBTreeButtons.insertLoop(RC, tree.add_3(RC, 5));
+          }, 5000);
+        }, 5000);
+        break;
+      case 51: // parent - red, uncle - not red, left-left node
+        sib.RC ? this.changeText("5.1) Родитель узла " + node.Value + " (" + P.Value + ") - красный, но дядя (" + sib.RC.Value + ") - черный, " + node.Value + " - левый сын левого сына. Выполняем большое правое вращение и меняем цвета " + P.Value + " (красный на черный) и " + sib.Value + " (черный на красный)") : this.changeText("5.1) Родитель узла " + node.Value + " (" + P.Value + ") - красный, но дяди нет, " + node.Value + " - левый сын левого сына. Выполняем большое правое вращение и меняем цвета " + P.Value + " (красный на черный) и " + sib.Value + " (черный на красный)");
+        updateHighlightNodes2([node, P, sib]);
+        setTimeout(() => {
+          gData = getGraphData(tree);
+          Graph.graphData(gData);
+          updateHighlightNodes2([node, P, sib]);
+          updateJsonStr();
+          this.setState({jsonValue: jsonStr});
+          this.setState({fieldDisabled: false, randomDisabled: false, insertDisabled: false, setJsonDisabled: false, searchDisabled: false, deleteDisabled: false, clearDisabled: false});
+          this.setState({textSuccess: "Вставка нового узла завершена!", openSuccess: true});
+        }, 5000);
+        break;
+      case 52: // parent - red, uncle - not red, right-right node
+        sib.LC ? this.changeText("5.2) Родитель узла " + node.Value + " (" + P.Value + ") - красный, но дядя (" + sib.LC.Value + ") - черный, " + node.Value + " - правый сын правого сына. Выполняем большое левое вращение и меняем цвета " + P.Value + " (красный на черный) и " + sib.Value + " (черный на красный)") : this.changeText("5.2) Родитель узла " + node.Value + " (" + P.Value + ") - красный, но дяди нет, " + node.Value + " - правый сын правого сына. Выполняем большое левое вращение и меняем цвета " + P.Value + " (красный на черный) и " + sib.Value + " (черный на красный)");
+        updateHighlightNodes2([node, P, sib]);
+        setTimeout(() => {
+          gData = getGraphData(tree);
+          Graph.graphData(gData);
+          updateHighlightNodes2([node, P, sib]);
+          updateJsonStr();
+          this.setState({jsonValue: jsonStr});
+          this.setState({fieldDisabled: false, randomDisabled: false, insertDisabled: false, setJsonDisabled: false, searchDisabled: false, deleteDisabled: false, clearDisabled: false});
+          this.setState({textSuccess: "Вставка нового узла завершена!", openSuccess: true});
+        }, 5000);
+        break;
+      default:
+        break;
+    }
   }
 
   // search node (steps = path to node)
   search() {
+    this.changeText("");
     this.setState({fieldDisabled: true, randomDisabled: true, insertDisabled: true, setJsonDisabled: true, searchDisabled: true, deleteDisabled: true, clearDisabled: true});
     if (currentValue == null || !Number.isInteger(currentValue)) this.setRandomValue();
     const {nodes, links} = gData;
     var found = tree.Root;
-    if (found) { updateHighlightNode2(found, nodes); }
+    if (found) {
+      updateHighlightNode2(found, nodes);
+      this.changeText("Начинаем поиск узла " + currentValue + " с корня " + found.Value);
+    } else {
+      this.changeText("Дерево пустое");
+    }
     this.searchLoop(found, nodes);
   }
   
   // recursive function for search
   searchLoop(found, nodes) {         
-    setTimeout(function() {   
+    setTimeout(function() {
+      const parentVal = found ? found.Value : null;
       found = tree.search_1(found, currentValue);
       if (found) updateHighlightNode2(found, nodes);
 
       if (found == null) {
+        if (!parentVal) {
+          thisRBTreeButtons.changeText("Дерево пустое");
+        } else if (parentVal && parentVal < currentValue) {
+          thisRBTreeButtons.changeText(currentValue + " больше " + parentVal + ", но у " + parentVal + " нет правого сына");
+        } else {
+          thisRBTreeButtons.changeText(currentValue + " меньше " + parentVal + ", но у " + parentVal + " нет левого сына");
+        }
         thisRBTreeButtons.setState({textFail: "Такого узла нет!", openFail: true});
         thisRBTreeButtons.setState({fieldDisabled: false, randomDisabled: false, insertDisabled: false, setJsonDisabled: false, searchDisabled: false, deleteDisabled: false, clearDisabled: false});
-      } else if (currentValue == found.Value) {
-        thisRBTreeButtons.setState({textSuccess: "Узел найден!", openSuccess: true});
-        thisRBTreeButtons.setState({fieldDisabled: false, randomDisabled: false, insertDisabled: false, setJsonDisabled: false, searchDisabled: false, deleteDisabled: false, clearDisabled: false});
       } else {
-        thisRBTreeButtons.searchLoop(found, nodes);
+        if (parentVal < currentValue) {
+          thisRBTreeButtons.changeText(currentValue + " больше " + parentVal + ", ищем в правом поддереве");
+        } else {
+          thisRBTreeButtons.changeText(currentValue + " меньше " + parentVal + ", ищем в левом поддереве");
+        }
+
+        if (currentValue == found.Value) {
+          thisRBTreeButtons.setState({textSuccess: "Узел найден!", openSuccess: true});
+          thisRBTreeButtons.setState({fieldDisabled: false, randomDisabled: false, insertDisabled: false, setJsonDisabled: false, searchDisabled: false, deleteDisabled: false, clearDisabled: false});
+        } else {
+          thisRBTreeButtons.searchLoop(found, nodes);
+        }
       }
-    }, 1000);
+    }, 3000);
   }
 
   // delete node (2-4 steps without search)
   delete() {
+    this.changeText("");
     this.setState({fieldDisabled: true, randomDisabled: true, insertDisabled: true, setJsonDisabled: true, searchDisabled: true, deleteDisabled: true, clearDisabled: true});
     if (currentValue == null || !Number.isInteger(currentValue)) this.setRandomValue();
     var deleted = tree.remove_search(currentValue);
@@ -271,6 +409,7 @@ class RBTreeButtons extends React.Component {
   clear() {
     this.setState({clearDisabled: true});
     clearHighlightNodes();
+    this.changeText("");
   }
 
   // set random value in text field for inserting new node / searching / deleting
@@ -305,7 +444,10 @@ class RBTreeButtons extends React.Component {
     return (
       <ThemeProvider theme={getTheme()}>
       <div>
-        <MyIconButtonUp onClick={() => this.setState({paperOpen: true})} visible={!this.state.paperOpen} />
+        <Grid container direction="row" justify="flex-end" alignItems="center" style={{maxWidth: '850px', paddingLeft: '5px', paddingRight: '30px', paddingBottom: '10px'}}>
+          <Grid item xs><MyInfoText text={this.state.text} /></Grid>
+          <Grid item xs={1}><MyIconButtonUp onClick={() => this.setState({paperOpen: true})} visible={!this.state.paperOpen} /></Grid>
+        </Grid>
 
         <Paper className={this.state.paperOpen ? "buttonsPaper" : "hided"}>
         <Grid container direction="column" justify="center" alignItems="center" spacing={1}>

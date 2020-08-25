@@ -203,13 +203,63 @@ export default class RBTree {
                 this.Root = node;
                 return node;
             }
-
             return this.AddNode(this.Root, node);
   }
 
   add_2(node) {
     this.Balancing(node);
     return node;
+  }
+
+  add_3(node, whatCase) {
+    var GP;
+    switch(whatCase) {
+      case 1:
+        if (node.Parent == null) {
+          node.Color = 2;
+          return 1;
+        } else return this.add_3(node, 2);
+        break;
+      case 2:
+        if (node.Parent.Color == 2) {
+          return 2;
+        } else return this.add_3(node, 3);
+        break;
+      case 3:
+        if (node.Uncle != null && node.Uncle.Color == 1) {
+          node.Parent.Color = 2;
+          node.Uncle.Color = 2;
+          node.GrandParent.Color = 1;
+          return 3;
+        } else return this.add_3(node, 4);
+        break;
+      case 4:
+        GP = node.GrandParent;
+        if (Comparator.equal(node, node.Parent.RightChild) && Comparator.equal(node.Parent, GP.LeftChild)) {
+          this.Rotate_Left(node.Parent);
+          node = node.LeftChild;
+          return 41;
+        } else if (Comparator.equal(node, node.Parent.LeftChild) && Comparator.equal(node.Parent, GP.RightChild)) {
+          this.Rotate_Right(node.Parent);
+          node = node.RightChild;
+          return 42;
+        } else return this.add_3(node, 5);
+        break;
+      case 5:
+        GP = node.GrandParent;
+        node.Parent.Color = 2;
+        GP.Color = 1;
+        if (Comparator.equal(node, node.Parent.LeftChild) && Comparator.equal(node.Parent, GP.LeftChild)) {
+          this.Rotate_Right(GP);
+          return 51;
+        } else {
+          this.Rotate_Left(GP);
+          return 52;
+        }
+        break;
+      default:
+        break;
+    }
   }
 
   ClearChildren(node)

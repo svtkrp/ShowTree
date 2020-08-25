@@ -7,6 +7,7 @@ import { ThemeProvider } from '@material-ui/styles';
 import MyAlert from '../common/MyAlert.js';
 import MyButton from '../common/MyButton.js';
 import MyNumberField from '../common/MyNumberField.js';
+import MyInfoText from '../common/MyInfoText.js';
 import MyControlText from '../common/MyControlText.js';
 import MyJsonPaper from '../common/MyJsonPaper.js';
 import MyIconButtonUp from '../common/MyIconButtonUp.js';
@@ -96,12 +97,16 @@ class HeapButtons extends React.Component {
     this.state = {fieldDisabled: false, randomDisabled: false, setJsonDisabled: false, jsonValue: jsonStr, jsonOpen: false, paperOpen: true, controlTextOpen: true,
       insertDisabled: false, deleteDisabled: (gData.nodes.length < 1), clearDisabled: true, 
       curValue: currentValue, openSuccess: false, openFail: false,
-      textSuccess: "", textFail: ""};
+      textSuccess: "", textFail: "", text: ""};
     thisButtons = this;
     
     setTimeout(() => {
       this.setState({controlTextOpen: false});
     }, 5000);
+  }
+
+  changeText(str) {
+    this.setState({text: str});
   }
 
   // on change number field
@@ -136,11 +141,14 @@ class HeapButtons extends React.Component {
 
   // delete min node
   deleteMin() {
+    this.clear();
     this.setState({fieldDisabled: true, randomDisabled: true, insertDisabled: true, deleteDisabled: true, clearDisabled: true,  setJsonDisabled: true});
 
     const {nodes, links} = gData;
     updateHighlight([nodes[0], nodes[nodes.length - 1]], []);
+    this.changeText("В куче наименьший узел - корень " + nodes[0].val);
     setTimeout(() => {
+      this.changeText("Меняем местами корень " + nodes[0].val + " и правый нижний лист " + nodes[nodes.length - 1].val);
       nodes[0].val = nodes[nodes.length - 1].val;
       nodes.length = nodes.length - 1;
       if (links.length > 0) links.length = links.length - 1;
@@ -154,13 +162,17 @@ class HeapButtons extends React.Component {
       const left = 2*i+1;
       const right = 2*i+2;
       var min = i;
+      var str;
       if ((left < A.length) && (A[left].val < A[min].val)) {
         min = left;
+        str = "левый";
       }
       if ((right < A.length) && (A[right].val < A[min].val)) {
         min = right;
+        str = "правый";
       }
       if (min != i) {
+        this.changeText("Спуск: " + A[i].val + " и его " + str + " (наименьший) сын " + A[min].val + " поменялись местами");
         updateHighlight([A[i], A[min]], [{source: A[i], target: A[min]}]);
         const v = A[i].val;
         A[i].val = A[min].val;
@@ -169,17 +181,28 @@ class HeapButtons extends React.Component {
         Graph.nodeThreeObject(Graph.nodeThreeObject());
         thisButtons.down(A, min);
       } else {
+        if ((left < A.length) && (right < A.length)) {
+          this.changeText("Спуск закончен: " + A[i].val + " не больше своих детей " + A[left].val + " и " + A[right].val);
+        } else if (left < A.length) {
+          this.changeText("Спуск закончен: " + A[i].val + " не больше своего сына " + A[left].val);
+        } else if (right < A.length) {
+          this.changeText("Спуск закончен: " + A[i].val + " не больше своего сына " + A[right].val);
+        } else {
+          this.changeText("Спуск закончен: " + A[i].val + " - лист");
+        }
+        updateHighlight([A[i]], []);
         tree = graphToHeap(gData);
         updateJsonStr();
         this.setState({jsonValue: jsonStr});
         this.setState({textSuccess: "Минимальный узел удален!", openSuccess: true});
         this.setState({fieldDisabled: false, randomDisabled: false, insertDisabled: false, deleteDisabled: (gData.nodes.length < 1), clearDisabled: false,  setJsonDisabled: false});
       }
-    }, 2000);
+    }, 4000);
   }
 
   // insert new node
   insert() {
+    this.clear();
     this.setState({fieldDisabled: true, randomDisabled: true, insertDisabled: true, deleteDisabled: true, clearDisabled: true,  setJsonDisabled: true});
     if (!currentValue || !Number.isFinite(currentValue)) this.setRandomValue();
     const {nodes, links} = gData;
@@ -188,16 +211,27 @@ class HeapButtons extends React.Component {
     gData = getGraphData(tree);
     Graph.graphData(gData);
     const parent = Math.floor((gData.nodes.length-1-1)/2);
-    if (parent >= 0) updateHighlight([gData.nodes[gData.nodes.length - 1], gData.nodes[parent]], [gData.links[gData.links.length - 1]])
-    else updateHighlight([gData.nodes[gData.nodes.length-1]], []);
-    this.up(gData.nodes, gData.nodes.length-1);
+    if (parent >= 0) {
+      updateHighlight([gData.nodes[gData.nodes.length - 1]], []);
+      this.changeText("Вставляем новый узел " + currentValue + " в \"первое\" пустое место");
+      this.up(gData.nodes, gData.nodes.length-1);
+    } else {
+      updateHighlight([gData.nodes[gData.nodes.length-1]], []);
+      this.changeText("Дерево пустое - вставляем новый узел " + currentValue + " на место корня");
+      tree = graphToHeap(gData);
+      updateJsonStr();
+      this.setState({jsonValue: jsonStr});
+      this.setState({textSuccess: "Вставка нового узла завершена!", openSuccess: true});
+      this.setState({fieldDisabled: false, randomDisabled: false, insertDisabled: false, deleteDisabled: false, clearDisabled: false,  setJsonDisabled: false});
+    }
   }
 
   up(A, i) {
     setTimeout(() => {
     const parent = Math.floor((i-1)/2);
-    if ((parent >= 0) && (i >= 1) && (A[parent].val > A[i].val)) {
+    if ((parent >= 0) && (A[parent].val > A[i].val)) {
       updateHighlight([A[i], A[parent]], [{source: A[parent], target: A[i]}]);
+      this.changeText("Узел всплывает: меняем местами " + A[i].val + " и его родителя " + A[parent].val + " (т.к. он больше сына)");
       const v = A[i].val;
       A[i].val = A[parent].val;
       A[parent].val = v;
@@ -206,19 +240,22 @@ class HeapButtons extends React.Component {
       i = parent;
       thisButtons.up(A, i);
     } else {
+      if (parent < 0) {this.changeText(A[i].val + " - корень, дальше всплывать некуда"); updateHighlight([A[i]], []);}
+      else {this.changeText("Узел " + A[i].val + " не меньше родителя " + A[parent].val + " - он больше не всплывает"); updateHighlight([A[i], A[parent]], [{source: A[parent], target: A[i]}]);}
       tree = graphToHeap(gData);
       updateJsonStr();
       this.setState({jsonValue: jsonStr});
       this.setState({textSuccess: "Вставка нового узла завершена!", openSuccess: true});
       this.setState({fieldDisabled: false, randomDisabled: false, insertDisabled: false, deleteDisabled: false, clearDisabled: false,  setJsonDisabled: false});
     }
-    }, 2000);
+    }, 3000);
   }
 
   // clear all hightlighting
   clear() {
     this.setState({clearDisabled: true});
     clearHighlight();
+    this.changeText("");
   }
 
   // set random value in text field for inserting new node / searching / deleting
@@ -251,7 +288,10 @@ class HeapButtons extends React.Component {
     return (
       <ThemeProvider theme={getTheme()}>
       <div>
-        <MyIconButtonUp onClick={() => this.setState({paperOpen: true})} visible={!this.state.paperOpen} />
+        <Grid container direction="row" justify="flex-end" alignItems="center" style={{maxWidth: '850px', paddingLeft: '5px', paddingRight: '30px', paddingBottom: '10px'}}>
+          <Grid item xs><MyInfoText text={this.state.text} /></Grid>
+          <Grid item xs={1}><MyIconButtonUp onClick={() => this.setState({paperOpen: true})} visible={!this.state.paperOpen} /></Grid>
+        </Grid>
 
         <Paper className={this.state.paperOpen ? "buttonsPaper" : "hided"}>
         <Grid container direction="column" justify="center" alignItems="center" spacing={1}>

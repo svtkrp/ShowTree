@@ -4,6 +4,7 @@ import Grid from '@material-ui/core/Grid';
 import Paper from '@material-ui/core/Paper';
 import Typography from '@material-ui/core/Typography';
 import ButtonBase from '@material-ui/core/ButtonBase';
+import Link from '@material-ui/core/Link';
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -52,9 +53,9 @@ export default function MenuItem(props) {
                 {getAlgoText(props.algos)}
               </Grid>
               <Grid item>
-                <Typography variant="body2">
-                  
-                </Typography>
+                <Link href={props.theoryHref} variant="body2" color="textPrimary" underline="hover">
+                  Теория...
+                </Link>
               </Grid>
             </Grid>
           </Grid>

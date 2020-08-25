@@ -2,12 +2,12 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import Paper from '@material-ui/core/Paper';
 import Grid from '@material-ui/core/Grid';
-import Typography from '@material-ui/core/Typography';
 import { ThemeProvider } from '@material-ui/styles';
 
 import MyAlert from '../common/MyAlert.js';
 import MyButton from '../common/MyButton.js';
 import MyNumberField from '../common/MyNumberField.js';
+import MyInfoText from '../common/MyInfoText.js';
 import MyControlText from '../common/MyControlText.js';
 import MyJsonPaper from '../common/MyJsonPaper.js';
 import MyIconButtonUp from '../common/MyIconButtonUp.js';
@@ -144,6 +144,7 @@ class AnyTreeButtons extends React.Component {
   depth() {
     this.setState({disabled: 'depth', setJsonDisabled: true, newDisabled: true});
     this.clear();
+    this.setState({text: "Нажмите на узел..."});
     // find depth when user click on any node
     Graph.onNodeClick(n => { this.findDepthPath(n.id); updateHighlighted(); this.setState({clearDisabled: false}); });
   }
@@ -171,6 +172,7 @@ class AnyTreeButtons extends React.Component {
   height() {
     this.setState({disabled: 'height', setJsonDisabled: true, newDisabled: true});
     this.clear();
+    this.setState({text: "Нажмите на узел..."});
     // find height when user click on any node
     Graph.onNodeClick(n => { this.findHeightPath(n); updateHighlighted(); this.setState({clearDisabled: false}); });
   }
@@ -251,11 +253,10 @@ class AnyTreeButtons extends React.Component {
     return (
       <ThemeProvider theme={getTheme()}>
       <div>
-        <Typography variant="button" color='secondary' gutterBottom style={{position: 'relative', left: '0%', bottom: '10px'}}>
-          {this.state.text}
-        </Typography>
-
-        <MyIconButtonUp onClick={() => this.setState({paperOpen: true})} visible={!this.state.paperOpen} />
+        <Grid container direction="row" justify="flex-end" alignItems="center" style={{maxWidth: '850px', paddingLeft: '5px', paddingRight: '30px', paddingBottom: '10px'}}>
+          <Grid item xs><MyInfoText text={this.state.text} /></Grid>
+          <Grid item xs={1}><MyIconButtonUp onClick={() => this.setState({paperOpen: true})} visible={!this.state.paperOpen} /></Grid>
+        </Grid>
 
         <Paper className={this.state.paperOpen ? "buttonsPaper" : "hided"}>
           <Grid container direction="row" justify="flex-start" alignItems="center" spacing={1}>
