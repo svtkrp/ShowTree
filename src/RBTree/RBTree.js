@@ -618,7 +618,6 @@ export default class RBTree {
                     }
 
 
-
                     if (Comparator.equal(node, this.Root))
                     {
                         subNode.Parent = null;
@@ -646,7 +645,6 @@ export default class RBTree {
                     node.GrandParent = null;
                     node.Uncle = null;
                     
-
                     // node is red => tree is still valid
 
                     if (node.Color == 2) //node is black
@@ -659,7 +657,6 @@ export default class RBTree {
                         else //node and subnode is both black
                         {
                             this.Delete_Balancing(subNode);
-
 
                         }
                     }
@@ -675,9 +672,5 @@ export default class RBTree {
                     return this.RemoveNode(node.RightChild, value);
             }
         }
-
-
-
-
     }
 

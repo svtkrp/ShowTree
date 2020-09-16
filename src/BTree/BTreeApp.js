@@ -559,7 +559,6 @@ console.log('searchLoop');
           <Grid container item direction="row" justify="flex-start" alignItems="center" spacing={1}>
             <Grid item><MyButton name="Вставить узел" onClick={() => this.insert()} disabled={this.state.insertDisabled} /></Grid>
             <Grid item><MyButton name="Найти узел" onClick={() => this.search()} disabled={this.state.searchDisabled} /></Grid>
-            <Grid item><MyButton name="Удалить узел" onClick={() => this.delete()} disabled={this.state.deleteDisabled} /></Grid>
             <Grid item><MyButton name="Убрать выделение" onClick={() => this.clear()} disabled={this.state.clearDisabled} /></Grid>
             <Grid item><MyButton name={this.state.jsonOpen ? "Закрыть JSON" : "Открыть JSON"} onClick={() => this.setState({jsonOpen: !this.state.jsonOpen})} /></Grid>
             <Grid item><MyIconButtonDown onClick={() => this.setState({paperOpen: false, jsonOpen: false, controlTextOpen: false})} /></Grid>
